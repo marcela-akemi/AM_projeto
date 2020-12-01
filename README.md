@@ -3,7 +3,7 @@
 Link para o dataset: https://www.kaggle.com/anmolkumar/health-insurance-cross-sell-prediction?select=train.csv 
 
 ## Data description
-g
+
 **Variable** | **Definition**
 --- | ---
 id | Unique ID for the customer
@@ -19,7 +19,7 @@ PolicySalesChannel | Anonymized Code for the channel of outreaching to the custo
 Vintage | Number of Days, Customer has been associated with the company
 Response | 1 : Customer is interested, 0 : Customer is not interested
 
-'
+
 ## Context
 
 Our client is an Insurance company that has provided Health Insurance to its customers now they need your help in building a model to predict whether the policyholders (customers) from past year will also be interested in Vehicle Insurance provided by the company.
