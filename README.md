@@ -1,36 +1,123 @@
-# Projeto final da disciplina Aprendizado de Máquinas - QS 2020
+#Projeto final AM
 
-Link para o dataset: https://www.kaggle.com/anmolkumar/health-insurance-cross-sell-prediction?select=train.csv 
+#### Sobre os dados 
 
-## Data description
+![Harvest picture credit to: https://unsplash.com/@scottagoodwill](https://images.unsplash.com/photo-1507662228758-08d030c4820b?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1489&q=80)
 
-**Variable** | **Definition**
---- | ---
-id | Unique ID for the customer
-Gender | Gender of the customer
-Age | Age of the customer
-Driving_License | 0 : Customer does not have DL, 1 : Customer already has DL
-Region_Code | Unique code for the region of the customer
-Previously_Insured | 1 : Customer already has Vehicle Insurance, 0 : Customer doesn't have Vehicle Insurance
-Vehicle_Age | Age of the Vehicle
-Vehicle_Damage | 1 : Customer got his/her vehicle damaged in the past. 0 : Customer didn't get his/her vehicle damaged in the past.
-Annual_Premium | The amount customer needs to pay as premium in the year
-PolicySalesChannel | Anonymized Code for the channel of outreaching to the customer ie. Different Agents, Over Mail, Over Phone, In Person, etc.
-Vintage | Number of Days, Customer has been associated with the company
-Response | 1 : Customer is interested, 0 : Customer is not interested
+# Global Crop Yields
+
+The data this week comes from [Our World in Data](https://ourworldindata.org/crop-yields). Note that there is a lot of data on that site, we're looking at some subsets but feel free to use whatever data from there you find interesting! It's all pretty clean and ready to go.
+
+Also note that there are cases where the long data includes both continent (eg Africa, Americas), countries (USA, Afghanistan, etc) and regions (North Asia, East Asia, etc). You'll need to be careful making assumptions when grouping and/or excluding specific groups.
+
+> Our data on agricultural yields across crop types and by country are much more extensive from 1960 onwards. The UN Food and Agricultural Organization (FAO) publish yield estimates across a range of crop commodities by country over this period. The FAO report yield values as the national average for any given year; this is calculated by diving total crop output (in kilograms or tonnes) by the area of land used to grow a given crop (in hectares). There are likely to be certain regional and seasonal differences in yield within a given country, however, reported average yields still provide a useful indication of changes in productivity over time and geographical region.
+
+We've also included data on the trade off between higher yields and land use, so there are some interesting changes to track beyond raw production.
+
+### Get the data here
+
+```{r}
+# Get the Data
+
+# Read in with tidytuesdayR package 
+# Install from CRAN via: install.packages("tidytuesdayR")
+# This loads the readme and all the datasets for the week of interest
+
+# Either ISO-8601 date or year/week works!
+
+tuesdata <- tidytuesdayR::tt_load('2020-09-01')
+tuesdata <- tidytuesdayR::tt_load(2020, week = 36)
+
+key_crop_yields <- tuesdata$key_crop_yields
+
+# Or read in the data manually
+
+key_crop_yields <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-01/key_crop_yields.csv')
+fertilizer <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-01/cereal_crop_yield_vs_fertilizer_application.csv')
+tractors <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-01/cereal_yields_vs_tractor_inputs_in_agriculture.csv')
+land_use <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-01/land_use_vs_yield_change_in_cereal_production.csv')
+arable_land <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-01/arable_land_pin.csv')
+
+```
+### Data Dictionary
+
+# `key_crop_yields.csv`
+
+|variable                         |class     |description |
+|:--------------------------------|:---------|:-----------|
+|Entity                           |character | Country or Region Name |
+|Code                             |character | Country Code (note is NA for regions/continents) |
+|Year                             |double    | Year |
+|Wheat (tonnes per hectare)       |double    | Wheat yield |
+|Rice (tonnes per hectare)        |double    | Rice Yield |
+|Maize (tonnes per hectare)       |double    | Maize yield |
+|Soybeans (tonnes per hectare)    |double    | Soybeans yield |
+|Potatoes (tonnes per hectare)    |double    | Potato yield |
+|Beans (tonnes per hectare)       |double    | Beans yield|
+|Peas (tonnes per hectare)        |double    | Peas yield |
+|Cassava (tonnes per hectare)     |double    | Cassava (yuca) yield|
+|Barley (tonnes per hectare)      |double    | Barley|
+|Cocoa beans (tonnes per hectare) |double    | Cocoa |
+|Bananas (tonnes per hectare)     |double    | Bananas |
+
+# `arable_land`
+
+|variable                                                               |class     |description |
+|:----------------------------------------------------------------------|:---------|:-----------|
+|Entity                           |character | Country or Region Name |
+|Code                             |character | Country Code (note is NA for regions/continents) |
+|Year                             |double    | Year |
+|Arable land needed to produce a fixed quantity of crops ((1.0 = 1961)) |double    | Arable land normalized to 1961 |
 
 
-## Context
+# `fertilizer`
 
-Our client is an Insurance company that has provided Health Insurance to its customers now they need your help in building a model to predict whether the policyholders (customers) from past year will also be interested in Vehicle Insurance provided by the company.
+|variable                                        |class     |description |
+|:-----------------------------------------------|:---------|:-----------|
+|Entity                           |character | Country or Region Name |
+|Code                             |character | Country Code (note is NA for regions/continents) |
+|Year                             |double    | Year |
+|Cereal yield (tonnes per hectare)               |double    | Cereal yield in tonnes per hectare |
+|Nitrogen fertilizer use (kilograms per hectare) |double    | Nitrogen fertilizer use kg per hectare |
 
-An insurance policy is an arrangement by which a company undertakes to provide a guarantee of compensation for specified loss, damage, illness, or death in return for the payment of a specified premium. A premium is a sum of money that the customer needs to pay regularly to an insurance company for this guarantee.
+# `land_use`
 
-For example, you may pay a premium of Rs. 5000 each year for a health insurance cover of Rs. 200,000/- so that if, God forbid, you fall ill and need to be hospitalised in that year, the insurance provider company will bear the cost of hospitalisation etc. for upto Rs. 200,000. Now if you are wondering how can company bear such high hospitalisation cost when it charges a premium of only Rs. 5000/-, that is where the concept of probabilities comes in picture. For example, like you, there may be 100 customers who would be paying a premium of Rs. 5000 every year, but only a few of them (say 2-3) would get hospitalised that year and not everyone. This way everyone shares the risk of everyone else.
+|variable                                                  |class     |description |
+|:---------------------------------------------------------|:---------|:-----------|
+|Entity                           |character | Country or Region Name |
+|Code                             |character | Country Code (note is NA for regions/continents) |
+|Year                             |double    | Year |
+|cereal yield index                                        |double    | Cereal yield index |
+|change to land area used for cereal production since 1961 |double    | Change to land area use for cereal production relative since 1961|
+|total population (gapminder)                              |double    | Total population from gapminder data |
 
-Just like medical insurance, there is vehicle insurance where every year customer needs to pay a premium of certain amount to insurance provider company so that in case of unfortunate accident by the vehicle, the insurance provider company will provide a compensation (called ‘sum assured’) to the customer.
+# `tractor`
 
-Building a model to predict whether a customer would be interested in Vehicle Insurance is extremely helpful for the company because it can then accordingly plan its communication strategy to reach out to those customers and optimise its business model and revenue.
+|variable                                              |class     |description |
+|:---------------------------------------------------------|:---------|:-----------|
+|Entity                           |character | Country or Region Name |
+|Code                             |character | Country Code (note is NA for regions/continents) |
+|Year                             |double    | Year |
+|Tractors per 100 sq km arable land                    |double    | Number of tractors per 100 sq km of arable land |
+|Cereal yield (kilograms per hectare) (kg per hectare) |double    | Cereal yield in kg per hectare |
+|Total population (Gapminder)                          |double    | Total population from gapminder |
 
-Now, in order to predict, whether the customer would be interested in Vehicle insurance, you have information about demographics (gender, age, region code type), Vehicles (Vehicle Age, Damage), Policy (Premium, sourcing channel) etc.
-'
+### Cleaning Script
+
+No real cleaning script today, but here's an example of how to pivot the data wider to longer.
+
+```{r}
+library(tidyverse)
+
+key_crops <- read_csv("2020/2020-09-01/key_crop_yields.csv")
+
+long_crops <- key_crops %>% 
+  pivot_longer(cols = 4:last_col(),
+               names_to = "crop", 
+               values_to = "crop_production") %>% 
+  mutate(crop = str_remove_all(crop, " \\(tonnes per hectare\\)")) %>% 
+  set_names(nm = names(.) %>% tolower())
+
+
+long_crops
+```
