@@ -1,0 +1,72 @@
+---
+title: "Projeto - Final"
+author: |
+        | Nome: José Mauricio Nunes de Oliveira Junior
+        | E-mail: jose.mauricio@aluno.ufabc.edu.br
+        | Nome: 
+        | E-mail: 
+
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Carregando os dados
+
+```{r, echo=FALSE}}
+install.packages("tidytuesdayR")
+library(tidytuesdayR)
+library(tidyverse)
+tuesdata <- tidytuesdayR::tt_load('2020-09-01')
+tuesdata <- tidytuesdayR::tt_load(2020, week = 36)
+
+key_crop_yields <- tuesdata$key_crop_yields
+fertilizer <- tuesdata$cereal_crop_yield_vs_fertilizer_application
+tractors <- tuesdata$cereal_yields_vs_tractor_inputs_in_agriculture
+land_use <- tuesdata$land_use_vs_yield_change_in_cereal_production
+arable_land <- tuesdata$arable_land_pin
+
+long_crops <- key_crop_yields %>% 
+  pivot_longer(cols = 4:last_col(),
+               names_to = "crop", 
+               values_to = "crop_production") %>% 
+  mutate(crop = str_remove_all(crop, " \\(tonnes per hectare\\)")) %>% 
+  set_names(nm = names(.) %>% tolower()) %>% dplyr::mutate(crop_production = replace_na(crop_production, 0))
+
+
+long_crops_lagged_1y <- rename(long_crops, last_year_production=crop_production) %>% mutate(year = year+1)
+long_crops_lagged_2y <- rename(long_crops, last_2year_production=crop_production) %>% mutate(year = year+2)
+long_crops_lagged_3y <- rename(long_crops, last_3year_production=crop_production) %>% mutate(year = year+3)
+
+df_long_crops <- long_crops %>% inner_join(long_crops_lagged_1y
+                                           , by = c("entity","code","year","crop")) %>%
+  inner_join(long_crops_lagged_2y
+                                           , by = c("entity","code","year","crop")) %>%
+inner_join(long_crops_lagged_3y
+                                           , by = c("entity","code","year","crop"))
+
+
+fertilizer <- fertilizer%>% mutate(Year = as.integer(Year))  %>% mutate_if(is.numeric, funs(replace_na(., 0))) %>% mutate(Year = Year+1)
+tractors <- tractors%>% mutate(Year = as.integer(Year)) %>% mutate_if(is.numeric, funs(replace_na(., 0))) %>% mutate(Year = Year+1)
+land_use <- land_use%>% mutate(Year = as.integer(Year)) %>% mutate_if(is.numeric, funs(replace_na(., 0))) %>% mutate(Year = Year+1)
+arable_land <- arable_land%>% mutate(Year = as.integer(Year)) %>% mutate_if(is.numeric, funs(replace_na(., 0))) %>% mutate(Year = Year+1)
+
+df<-df_long_crops %>% inner_join(fertilizer, c("entity"="Entity","code"="Code" ,"year"="Year"))%>%
+inner_join(tractors, c("entity"="Entity","code"="Code" ,"year"="Year"))%>%
+inner_join(land_use, c("entity"="Entity","code"="Code" ,"year"="Year"))%>%
+inner_join(arable_land, c("entity"="Entity","code"="Code" ,"year"="Year"))
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
